@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<robot name="lio" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:property name="PI" value="3.1415926535897931" />
+
+  <link name="base_link"></link>
+
+  <link name="base_imu"> </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="base_imu" />
+    <origin xyz="0 0 0.0405" rpy="0 0 0" />
+  </joint>
+
+  <link name="base_scan_3d"> </link>
+  <joint name="velodyne_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="base_scan_3d" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+</robot>

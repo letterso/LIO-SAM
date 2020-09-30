@@ -1,0 +1,29 @@
+<launch>
+
+    <arg name="project" default="lio_sam"/>
+    <arg name="IMU_port" default="/dev/ttyUSB0"/>
+    
+    <!-- Parameters -->
+    <rosparam file="$(find lio_sam)/config/rs_params.yaml" command="load" />
+
+    <!--- Robot State TF -->
+    <param name="robot_description" command="$(find xacro)/xacro $(find lio_sam)/launch/include/config/scout.urdf.xacro --inorder" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" />
+
+    <!-- load hardware -->
+    <!-- IMU -->
+    <node name="imu_node" pkg="imu_interface" type="imu_node" output="screen" respawn="true">
+        <param name="port" type="string" value="$(arg IMU_port)"/>      
+    </node>
+    <!-- rs liadr -->
+    <!--include file="$(find rslidar_sdk)/launch/start.launch" >
+        <arg name="rviz" value="false" />
+    </include-->
+
+    <!--- LOAM -->
+    <include file="$(find lio_sam)/launch/include/module_loam.launch" />
+
+    <!--- Run Rviz-->
+    <include file="$(find lio_sam)/launch/include/module_rviz.launch" />
+
+</launch>
