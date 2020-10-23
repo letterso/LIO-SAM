@@ -227,25 +227,36 @@ public:
 
   sensor_msgs::Imu imuConverter(const sensor_msgs::Imu &imu_in)
   {
-    sensor_msgs::Imu imu_out = imu_in;
+    // discard imu quarternion
+    sensor_msgs::Imu imu_in_m = imu_in;
+    imu_in_m.orientation.x = 0;
+    imu_in_m.orientation.y = 0;
+    imu_in_m.orientation.z = 0;
+    imu_in_m.orientation.w = 1;
+    for (int i = 0; i < 9; i++)
+    {
+      imu_in_m.orientation_covariance[i] = -1;
+    }
+
+    sensor_msgs::Imu imu_out = imu_in_m;
 
     // rotate acceleration
-    Eigen::Vector3d acc(imu_in.linear_acceleration.x, imu_in.linear_acceleration.y, imu_in.linear_acceleration.z);
+    Eigen::Vector3d acc(imu_in_m.linear_acceleration.x, imu_in_m.linear_acceleration.y, imu_in_m.linear_acceleration.z);
     acc = extRot * acc;
     imu_out.linear_acceleration.x = acc.x();
     imu_out.linear_acceleration.y = acc.y();
     imu_out.linear_acceleration.z = acc.z();
 
     // rotate gyroscope
-    Eigen::Vector3d gyr(imu_in.angular_velocity.x, imu_in.angular_velocity.y, imu_in.angular_velocity.z);
-    // gyr = extRot * gyr;
-    gyr = extRPY * gyr;
+    Eigen::Vector3d gyr(imu_in_m.angular_velocity.x, imu_in_m.angular_velocity.y, imu_in_m.angular_velocity.z);
+    gyr = extRot * gyr;
+    // gyr = extRPY * gyr;
     imu_out.angular_velocity.x = gyr.x();
     imu_out.angular_velocity.y = gyr.y();
     imu_out.angular_velocity.z = gyr.z();
 
     // rotate roll pitch yaw
-    Eigen::Quaterniond q_from(imu_in.orientation.w, imu_in.orientation.x, imu_in.orientation.y, imu_in.orientation.z);
+    Eigen::Quaterniond q_from(imu_in_m.orientation.w, imu_in_m.orientation.x, imu_in_m.orientation.y, imu_in_m.orientation.z);
     Eigen::Quaterniond q_final = q_from * extQRPY;
     imu_out.orientation.x = q_final.x();
     imu_out.orientation.y = q_final.y();
