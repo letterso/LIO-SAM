@@ -32,12 +32,20 @@ lio_sam:
 
   # IMU Settings
   # 加速度计和磁力计的噪声和bias
+  # bw
   imuAccNoise: 3.0e-04
   imuGyrNoise: 1.745329252e-04
   imuAccBiasN: 6.0e-05
   imuGyrBiasN: 9.75668712644545e-04
   imuGravity: 9.7833
   imuRPYWeight: 0.01
+  # hwt
+  #imuAccNoise: 3.0e-04
+  #imuGyrNoise: 1.745329252e-04
+  #imuAccBiasN: 6.0e-05
+  #imuGyrBiasN: 9.75668712644545e-04
+  #imuGravity: 9.7833
+  #imuRPYWeight: 0.01
 
   # Extrinsics (lidar -> IMU)
   # extrinsicRot 加速度计旋转变换
