@@ -47,6 +47,7 @@ private:
     
     ros::Publisher pubExtractedCloud;
     ros::Publisher pubLaserCloudInfo;
+    ros::Publisher pubPointsCheck;
 
     ros::Subscriber subImu;
     std::deque<sensor_msgs::Imu> imuQueue;
@@ -70,6 +71,7 @@ private:
     pcl::PointCloud<OusterPointXYZIRT>::Ptr tmpOusterCloudIn;
     pcl::PointCloud<PointType>::Ptr   fullCloud;
     pcl::PointCloud<PointType>::Ptr   extractedCloud;
+    // pcl::PointCloud<PointType>::Ptr   checkCloud;
 
     int deskewFlag;
     cv::Mat rangeMat;
@@ -95,6 +97,7 @@ public:
 
         pubExtractedCloud = nh.advertise<sensor_msgs::PointCloud2> ("lio_sam/deskew/cloud_deskewed", 1);
         pubLaserCloudInfo = nh.advertise<lio_sam::cloud_info> ("lio_sam/deskew/cloud_info", 1);
+        // pubPointsCheck = nh.advertise<sensor_msgs::PointCloud2> ("lio_sam/check/cloud", 1);
 
         allocateMemory();
         resetParameters();
