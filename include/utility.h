@@ -247,14 +247,14 @@ public:
     sensor_msgs::Imu imuConverter(const sensor_msgs::Imu& imu_in)
     {
         sensor_msgs::Imu imu_in_m = imu_in;
-        imu_in_m.orientation.x = 0;
-        imu_in_m.orientation.y = 0;
-        imu_in_m.orientation.z = 0;
-        imu_in_m.orientation.w = 1;
-        for (int i = 0; i < 9; i++)
-        {
-          imu_in_m.orientation_covariance[i] = -1;
-        }
+        // imu_in_m.orientation.x = 0;
+        // imu_in_m.orientation.y = 0;
+        // imu_in_m.orientation.z = 0;
+        // imu_in_m.orientation.w = 1;
+        // for (int i = 0; i < 9; i++)
+        // {
+        //   imu_in_m.orientation_covariance[i] = -1;
+        // }
         sensor_msgs::Imu imu_out = imu_in;
 
         // rotate acceleration

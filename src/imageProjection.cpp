@@ -344,10 +344,25 @@ public:
             imuAngular2rosAngular(&thisImuMsg, &angular_x, &angular_y, &angular_z);
 
             // integrate rotation
-            double timeDiff = currentImuTime - imuTime[imuPointerCur-1];
-            imuRotX[imuPointerCur] = imuRotX[imuPointerCur-1] + angular_x * timeDiff;
-            imuRotY[imuPointerCur] = imuRotY[imuPointerCur-1] + angular_y * timeDiff;
-            imuRotZ[imuPointerCur] = imuRotZ[imuPointerCur-1] + angular_z * timeDiff;
+            // double timeDiff = currentImuTime - imuTime[imuPointerCur-1];
+            // imuRotX[imuPointerCur] = imuRotX[imuPointerCur-1] + angular_x * timeDiff;
+            // imuRotY[imuPointerCur] = imuRotY[imuPointerCur-1] + angular_y * timeDiff;
+            // imuRotZ[imuPointerCur] = imuRotZ[imuPointerCur-1] + angular_z * timeDiff;
+            // imuTime[imuPointerCur] = currentImuTime;
+            // ++imuPointerCur;
+
+            // integrate rotation using quaternion
+            double timeDiff = currentImuTime - imuTime[imuPointerCur - 1];
+            tf::Quaternion last_orientation = tf::createQuaternionFromRPY(
+                imuRotX[imuPointerCur - 1], imuRotY[imuPointerCur - 1],imuRotZ[imuPointerCur - 1]);
+            tf::Quaternion delta_orientation = tf::createQuaternionFromRPY(
+                angular_x * timeDiff, angular_y * timeDiff,angular_z * timeDiff);
+            tf::Quaternion curr_orientation = last_orientation * delta_orientation;
+            double imuRoll, imuPitch, imuYaw;
+            tf::Matrix3x3(curr_orientation).getRPY(imuRoll, imuPitch, imuYaw);
+            imuRotX[imuPointerCur] = imuRoll;
+            imuRotY[imuPointerCur] = imuPitch;
+            imuRotZ[imuPointerCur] = imuYaw;
             imuTime[imuPointerCur] = currentImuTime;
             ++imuPointerCur;
         }

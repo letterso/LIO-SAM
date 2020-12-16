@@ -1,0 +1,29 @@
+<launch>
+
+    <arg name="project" default="lio_sam"/>
+    
+    <!-- Parameters -->
+    <rosparam file="$(find lio_sam)/config/ls_params.yaml" command="load" />
+
+    <!-- load hardware -->
+    <!-- IMU -->
+    <!--include file="$(find imu_interface)/launch/imu_interface.launch">
+        <arg name="port" value="/dev/ttyUSB0"/>
+        <arg name="hwt" value="false" />
+    </include-->
+    <!-- ls liadr -->
+    <!--include file="$(find lslidar_c16_driver)/launch/lslidar_c16.launch">
+        <arg name="laserscan" value="false" />
+    </include-->
+
+    <!--- LOAM -->
+    <include file="$(find lio_sam)/launch/include/module_loam.launch" />
+
+    <!--- Robot State TF -->
+    <param name="robot_description" command="$(find xacro)/xacro $(find lio_sam)/launch/include/config/scout.urdf.xacro --inorder" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" />
+
+    <!--- Run Rviz-->
+    <include file="$(find lio_sam)/launch/include/module_rviz.launch" />
+
+</launch>

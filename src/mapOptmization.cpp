@@ -1259,8 +1259,7 @@ public:
         {
             if (std::abs(cloudInfo.imuPitchInit) < 1.4)
             {
-                //double imuWeight = imuRPYWeight;
-                double imuWeight = 0;
+                double imuWeight = imuRPYWeight;
                 tf::Quaternion imuQuaternion;
                 tf::Quaternion transformQuaternion;
                 double rollMid, pitchMid, yawMid;
@@ -1608,7 +1607,7 @@ public:
                 if (std::abs(cloudInfo.imuPitchInit) < 1.4)
                 {
                     //double imuWeight = 0.1;
-                    double imuWeight = 0.0;
+                    double imuWeight = imuRPYWeight;
                     tf::Quaternion imuQuaternion;
                     tf::Quaternion transformQuaternion;
                     double rollMid, pitchMid, yawMid;
