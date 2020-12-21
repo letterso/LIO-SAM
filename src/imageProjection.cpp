@@ -6,7 +6,7 @@ struct VelodynePointXYZIRT
     PCL_ADD_POINT4D
     PCL_ADD_INTENSITY;
     uint16_t ring;
-    float time;
+    double time;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;
 POINT_CLOUD_REGISTER_POINT_STRUCT (VelodynePointXYZIRT,
