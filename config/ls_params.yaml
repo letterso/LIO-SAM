@@ -65,9 +65,9 @@ lio_sam:
   surfFeatureMinValidNum: 100
 
   # voxel filter paprams
-  odometrySurfLeafSize: 0.2                     # default: 0.4 - outdoor, 0.2 - indoor
-  mappingCornerLeafSize: 0.1                    # default: 0.2 - outdoor, 0.1 - indoor
-  mappingSurfLeafSize: 0.2                      # default: 0.4 - outdoor, 0.2 - indoor
+  odometrySurfLeafSize: 0.1                     # default: 0.4 - outdoor, 0.2 - indoor
+  mappingCornerLeafSize: 0.05                    # default: 0.2 - outdoor, 0.1 - indoor
+  mappingSurfLeafSize: 0.1                      # default: 0.4 - outdoor, 0.2 - indoor
 
   # robot motion constraint (in case you are using a 2D robot)
   z_tollerance: 10                           # meters
@@ -102,7 +102,7 @@ navsat:
   frequency: 50
   wait_for_datum: false
   delay: 0.0
-  magnetic_declination_radians: 0
+  magnetic_declination_radians: -0.055152 # 3.16°W
   yaw_offset: 0
   zero_altitude: true
   broadcast_utm_transform: false

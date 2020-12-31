@@ -52,10 +52,9 @@ void saveOptimizedVerticesKITTIformat(gtsam::Values _estimates, std::string _fil
     }
 }
 
-
 /*
-    * A point cloud type that has 6D pose info ([x,y,z,roll,pitch,yaw] intensity is time stamp)
-    */
+* A point cloud type that has 6D pose info ([x,y,z,roll,pitch,yaw] intensity is time stamp)
+*/
 struct PointXYZIRPYT
 {
     PCL_ADD_POINT4D
@@ -65,7 +64,7 @@ struct PointXYZIRPYT
     float yaw;
     double time;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW   // make sure our new allocators are aligned
-} EIGEN_ALIGN16;                    // enforce SSE padding for correct memory alignment
+} EIGEN_ALIGN16;                      // enforce SSE padding for correct memory alignment
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZIRPYT,
                                    (float, x, x) (float, y, y)
@@ -234,9 +233,7 @@ public:
         pubRecentKeyFrame     = nh.advertise<sensor_msgs::PointCloud2>("lio_sam/mapping/cloud_registered", 1);
         pubCloudRegisteredRaw = nh.advertise<sensor_msgs::PointCloud2>("lio_sam/mapping/cloud_registered_raw", 1);
 
-        const float kSCFilterSize = 0.5; // giseop
         downSizeFilterSC.setLeafSize(kSCFilterSize, kSCFilterSize, kSCFilterSize); // giseop
-
         downSizeFilterCorner.setLeafSize(mappingCornerLeafSize, mappingCornerLeafSize, mappingCornerLeafSize);
         downSizeFilterSurf.setLeafSize(mappingSurfLeafSize, mappingSurfLeafSize, mappingSurfLeafSize);
         downSizeFilterICP.setLeafSize(mappingSurfLeafSize, mappingSurfLeafSize, mappingSurfLeafSize);
@@ -639,7 +636,7 @@ public:
         // ICP Settings
         static pcl::IterativeClosestPoint<PointType, PointType> icp;
         //icp.setMaxCorrespondenceDistance(historyKeyframeSearchRadius*2);
-	icp.setMaxCorrespondenceDistance(150);
+	    icp.setMaxCorrespondenceDistance(150);
         icp.setMaximumIterations(100);
         icp.setTransformationEpsilon(1e-6);
         icp.setEuclideanFitnessEpsilon(1e-6);
@@ -1815,21 +1812,19 @@ public:
             scManager.makeAndSaveScancontextAndKeys(*multiKeyFrameFeatureCloud); 
         }
 
-        if (savePCD == true) {
-          // save sc data
-          const auto &curr_scd = scManager.getConstRefRecentSCD();
-          std::string curr_scd_node_idx = padZeros(scManager.polarcontexts_.size() - 1);
+        // save sc data
+        const auto &curr_scd = scManager.getConstRefRecentSCD();
+        std::string curr_scd_node_idx = padZeros(scManager.polarcontexts_.size() - 1);
 
-          saveSCD(saveSCDDirectory + curr_scd_node_idx + ".scd", curr_scd);
+        saveSCD(saveSCDDirectory + curr_scd_node_idx + ".scd", curr_scd);
 
-          // save keyframe cloud as file giseop
-          pcl::PointCloud<PointType>::Ptr thisKeyFrameCloud(new pcl::PointCloud<PointType>());
-          *thisKeyFrameCloud += *thisCornerKeyFrame;
-          *thisKeyFrameCloud += *thisSurfKeyFrame;
+        // save keyframe cloud as file giseop
+        pcl::PointCloud<PointType>::Ptr thisKeyFrameCloud(new pcl::PointCloud<PointType>());
+        *thisKeyFrameCloud += *thisCornerKeyFrame;
+        *thisKeyFrameCloud += *thisSurfKeyFrame;
 
-          pcl::io::savePCDFileBinary(saveNodePCDDirectory + curr_scd_node_idx + ".pcd", *thisKeyFrameCloud);
-          pgTimeSaveStream << laserCloudRawTime << std::endl;
-        }
+        pcl::io::savePCDFileBinary(saveNodePCDDirectory + curr_scd_node_idx + ".pcd", *thisKeyFrameCloud);
+        pgTimeSaveStream << laserCloudRawTime << std::endl;
 
         // save path for visualization
         updatePath(thisPose6D);

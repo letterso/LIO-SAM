@@ -123,6 +123,7 @@ public:
     int surfFeatureMinValidNum;
 
     // voxel filter paprams
+    float kSCFilterSize;
     float odometrySurfLeafSize;
     float mappingCornerLeafSize;
     float mappingSurfLeafSize ;
@@ -218,6 +219,7 @@ public:
         nh.param<int>("lio_sam/edgeFeatureMinValidNum", edgeFeatureMinValidNum, 10);
         nh.param<int>("lio_sam/surfFeatureMinValidNum", surfFeatureMinValidNum, 100);
 
+        nh.param<float>("lio_sam/kSCFilterSize", kSCFilterSize, 0.5);
         nh.param<float>("lio_sam/odometrySurfLeafSize", odometrySurfLeafSize, 0.2);
         nh.param<float>("lio_sam/mappingCornerLeafSize", mappingCornerLeafSize, 0.2);
         nh.param<float>("lio_sam/mappingSurfLeafSize", mappingSurfLeafSize, 0.2);
