@@ -187,6 +187,8 @@ rosbag play your-bag.bag -r 3
 
   - **mapOptimization crash**: it is usually caused by GTSAM. Please install the GTSAM specified in the README.md. More similar issues can be found [here](https://github.com/TixiaoShan/LIO-SAM/issues).
 
+  - **gps odometry unavailable**: it is generally caused due to unavailable transform between message frame_ids and robot frame_id (for example: transform should be available from "imu_frame_id" and "gps_frame_id" to "base_link" frame. Please read the Robot Localization documentation found [here](http://docs.ros.org/en/melodic/api/robot_localization/html/preparing_sensor_data.html).
+
 ## Paper 
 
 Thank you for citing [LIO-SAM (IROS-2020)](./config/doc/paper.pdf) if you use any of this code. 
@@ -219,6 +221,7 @@ Part of the code is adapted from [LeGO-LOAM](https://github.com/RobustFieldAuton
 
 ## Related Package
 
+  - [Lidar-IMU calibration](https://github.com/chennuo0125-HIT/lidar_imu_calib)
   - [LIO-SAM with ROS2](https://github.com/CAKGOD/lio_sam_ros2)
   - [LIO-SAM with Scan Context](https://github.com/gisbi-kim/SC-LIO-SAM)
 
