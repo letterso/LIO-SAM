@@ -9,7 +9,7 @@
     <include file="$(find lio_sam)/launch/include/module_loam.launch" />
 
     <!--- Run Navsat -->
-    <include file="$(find lio_sam)/launch/include/module_navsat.launch" />
+    <!--include file="$(find lio_sam)/launch/include/module_navsat.launch" /-->
 
     <!--- Run Rviz-->
     <include file="$(find lio_sam)/launch/include/module_rviz.launch" />
