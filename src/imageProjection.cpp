@@ -163,9 +163,9 @@ public:
         //       ", y: " << thisImu.angular_velocity.y << 
         //       ", z: " << thisImu.angular_velocity.z << endl;
         // double imuRoll, imuPitch, imuYaw;
-        // tf::Quaternion orientation;
-        // tf::quaternionMsgToTF(thisImu.orientation, orientation);
-        // tf::Matrix3x3(orientation).getRPY(imuRoll, imuPitch, imuYaw);
+        // tf2::Quaternion orientation;
+        // tf2::convert(thisImu.orientation, orientation)
+        // tf2::Matrix3x3(orientation).getRPY(imuRoll, imuPitch, imuYaw);
         // cout << "IMU roll pitch yaw: " << endl;
         // cout << "roll: " << imuRoll << ", pitch: " << imuPitch << ", yaw: " << imuYaw << endl << endl;
     }
@@ -353,13 +353,12 @@ public:
 
             // integrate rotation using quaternion
             double timeDiff = currentImuTime - imuTime[imuPointerCur - 1];
-            tf::Quaternion last_orientation = tf::createQuaternionFromRPY(
-                imuRotX[imuPointerCur - 1], imuRotY[imuPointerCur - 1],imuRotZ[imuPointerCur - 1]);
-            tf::Quaternion delta_orientation = tf::createQuaternionFromRPY(
-                angular_x * timeDiff, angular_y * timeDiff,angular_z * timeDiff);
-            tf::Quaternion curr_orientation = last_orientation * delta_orientation;
+            tf2::Quaternion last_orientation,delta_orientation;
+            last_orientation.setRPY(imuRotX[imuPointerCur - 1], imuRotY[imuPointerCur - 1],imuRotZ[imuPointerCur - 1]);
+            delta_orientation.setRPY(angular_x * timeDiff, angular_y * timeDiff,angular_z * timeDiff);
+            tf2::Quaternion curr_orientation = last_orientation * delta_orientation;
             double imuRoll, imuPitch, imuYaw;
-            tf::Matrix3x3(curr_orientation).getRPY(imuRoll, imuPitch, imuYaw);
+            tf2::Matrix3x3(curr_orientation).getRPY(imuRoll, imuPitch, imuYaw);
             imuRotX[imuPointerCur] = imuRoll;
             imuRotY[imuPointerCur] = imuPitch;
             imuRotZ[imuPointerCur] = imuYaw;
@@ -406,11 +405,11 @@ public:
                 break;
         }
 
-        tf::Quaternion orientation;
-        tf::quaternionMsgToTF(startOdomMsg.pose.pose.orientation, orientation);
+        tf2::Quaternion orientation;
+        tf2::convert(startOdomMsg.pose.pose.orientation, orientation);
 
         double roll, pitch, yaw;
-        tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+        tf2::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
 
         // Initial guess used in mapOptimization
         cloudInfo.initialGuessX = startOdomMsg.pose.pose.position.x;
@@ -445,8 +444,8 @@ public:
 
         Eigen::Affine3f transBegin = pcl::getTransformation(startOdomMsg.pose.pose.position.x, startOdomMsg.pose.pose.position.y, startOdomMsg.pose.pose.position.z, roll, pitch, yaw);
 
-        tf::quaternionMsgToTF(endOdomMsg.pose.pose.orientation, orientation);
-        tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+        tf2::convert(endOdomMsg.pose.pose.orientation, orientation);
+        tf2::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
         Eigen::Affine3f transEnd = pcl::getTransformation(endOdomMsg.pose.pose.position.x, endOdomMsg.pose.pose.position.y, endOdomMsg.pose.pose.position.z, roll, pitch, yaw);
 
         Eigen::Affine3f transBt = transBegin.inverse() * transEnd;

@@ -35,22 +35,27 @@ public:
     Eigen::Affine3f imuOdomAffineFront;
     Eigen::Affine3f imuOdomAffineBack;
 
-    tf::TransformListener tfListener;
-    tf::StampedTransform lidar2Baselink;
+    tf2_ros::Buffer tfBuffer;
+
+    geometry_msgs::TransformStamped lidar2Baselink_msg;
+    tf2::Transform lidar2Baselink;
+    
 
     double lidarOdomTime = -1;
     deque<nav_msgs::Odometry> imuOdomQueue;
 
     TransformFusion()
     {
+        tf2_ros::TransformListener tfListener(tfBuffer);
+
         if(lidarFrame != baselinkFrame)
         {
             try
             {
-                tfListener.waitForTransform(lidarFrame, baselinkFrame, ros::Time(0), ros::Duration(3.0));
-                tfListener.lookupTransform(lidarFrame, baselinkFrame, ros::Time(0), lidar2Baselink);
+                lidar2Baselink_msg = tfBuffer.lookupTransform(lidarFrame, baselinkFrame, ros::Time(0), ros::Duration(3.0));
+                tf2::convert(lidar2Baselink_msg.transform, lidar2Baselink);
             }
-            catch (tf::TransformException ex)
+            catch (tf2::TransformException ex)
             {
                 ROS_ERROR("%s",ex.what());
             }
@@ -69,9 +74,9 @@ public:
         x = odom.pose.pose.position.x;
         y = odom.pose.pose.position.y;
         z = odom.pose.pose.position.z;
-        tf::Quaternion orientation;
-        tf::quaternionMsgToTF(odom.pose.pose.orientation, orientation);
-        tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+        tf2::Quaternion orientation;
+        tf2::convert(odom.pose.pose.orientation, orientation);
+        tf2::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
         return pcl::getTransformation(x, y, z, roll, pitch, yaw);
     }
 
@@ -87,9 +92,13 @@ public:
     void imuOdometryHandler(const nav_msgs::Odometry::ConstPtr& odomMsg)
     {
         // static tf
-        static tf::TransformBroadcaster tfMap2Odom;
-        static tf::Transform map_to_odom = tf::Transform(tf::createQuaternionFromRPY(0, 0, 0), tf::Vector3(0, 0, 0));
-        tfMap2Odom.sendTransform(tf::StampedTransform(map_to_odom, odomMsg->header.stamp, mapFrame, odometryFrame));
+        static tf2_ros::TransformBroadcaster tfMap2Odom;
+        tf2::Transform map_to_odom;
+        map_to_odom.setOrigin(tf2::Vector3(0,0,0));
+        map_to_odom.setRotation(tf2::Quaternion(0,0,0,1));
+        geometry_msgs::TransformStamped map_to_odom_msg = tf2::toMsg(tf2::Stamped<tf2::Transform>(map_to_odom, odomMsg->header.stamp, mapFrame));
+        map_to_odom_msg.child_frame_id = odometryFrame;
+        tfMap2Odom.sendTransform(map_to_odom_msg);
 
         std::lock_guard<std::mutex> lock(mtx);
 
@@ -117,16 +126,22 @@ public:
         laserOdometry.pose.pose.position.x = x;
         laserOdometry.pose.pose.position.y = y;
         laserOdometry.pose.pose.position.z = z;
-        laserOdometry.pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
+        tf2::Quaternion laserOdometry_quat_tf;
+        laserOdometry_quat_tf.setRPY(roll, pitch, yaw);
+        tf2::convert(laserOdometry_quat_tf, laserOdometry.pose.pose.orientation);
         pubImuOdometry.publish(laserOdometry);
 
         // publish tf
-        static tf::TransformBroadcaster tfOdom2BaseLink;
-        tf::Transform tCur;
-        tf::poseMsgToTF(laserOdometry.pose.pose, tCur);
+        static tf2_ros::TransformBroadcaster tfOdom2BaseLink;
+        tf2::Transform tCur;
+        tf2::Vector3 laserOdometry_trans_tf(laserOdometry.pose.pose.position.x,laserOdometry.pose.pose.position.y,laserOdometry.pose.pose.position.z);
+        tCur.setOrigin(laserOdometry_trans_tf);
+        tCur.setRotation(laserOdometry_quat_tf);
         if(lidarFrame != baselinkFrame)
             tCur = tCur * lidar2Baselink;
-        tf::StampedTransform odom_2_baselink = tf::StampedTransform(tCur, odomMsg->header.stamp, odometryFrame, baselinkFrame);
+        geometry_msgs::TransformStamped odom_2_baselink = tf2::toMsg(tf2::Stamped<tf2::Transform>(tCur, odomMsg->header.stamp, odometryFrame));
+        odom_2_baselink.child_frame_id = baselinkFrame;
+
         tfOdom2BaseLink.sendTransform(odom_2_baselink);
 
         // publish IMU path
