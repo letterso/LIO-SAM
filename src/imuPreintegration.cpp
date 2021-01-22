@@ -36,36 +36,41 @@ public:
     Eigen::Affine3f imuOdomAffineBack;
 
     tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener tfListener;
 
     geometry_msgs::TransformStamped lidar2Baselink_msg;
     tf2::Transform lidar2Baselink;
-    
+    bool lidar2Baselink_vail;
 
     double lidarOdomTime = -1;
     deque<nav_msgs::Odometry> imuOdomQueue;
 
-    TransformFusion()
+    TransformFusion() : tfListener(tfBuffer)
     {
-        tf2_ros::TransformListener tfListener(tfBuffer);
-
-        if(lidarFrame != baselinkFrame)
-        {
-            try
-            {
-                lidar2Baselink_msg = tfBuffer.lookupTransform(lidarFrame, baselinkFrame, ros::Time(0), ros::Duration(3.0));
-                tf2::convert(lidar2Baselink_msg.transform, lidar2Baselink);
-            }
-            catch (tf2::TransformException ex)
-            {
-                ROS_ERROR("%s",ex.what());
-            }
-        }
-
         subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("lio_sam/mapping/odometry", 5, &TransformFusion::lidarOdometryHandler, this, ros::TransportHints().tcpNoDelay());
         subImuOdometry   = nh.subscribe<nav_msgs::Odometry>(odomTopic+"_incremental",   2000, &TransformFusion::imuOdometryHandler,   this, ros::TransportHints().tcpNoDelay());
 
         pubImuOdometry   = nh.advertise<nav_msgs::Odometry>(odomTopic, 2000);
         pubImuPath       = nh.advertise<nav_msgs::Path>    ("lio_sam/imu/path", 1);
+
+        // wait tfBuffer get tran
+        ros::Duration(2.0).sleep();
+
+        lidar2Baselink_vail = true;
+        if(lidarFrame != baselinkFrame)
+        {
+            try
+            {
+                lidar2Baselink_msg = tfBuffer.lookupTransform(lidarFrame, baselinkFrame, ros::Time(0), ros::Duration(2.0));
+                tf2::convert(lidar2Baselink_msg.transform, lidar2Baselink);
+                ROS_INFO_STREAM("lidar2Baselink: "<< lidar2Baselink_msg);
+            }
+            catch (tf2::TransformException ex)
+            {
+                lidar2Baselink_vail = false;
+                ROS_ERROR_STREAM("error in lookupTransform from "<<lidarFrame<<" to "<<baselinkFrame<<":"<<ex.what());
+            }
+        }
     }
 
     Eigen::Affine3f odom2affine(nav_msgs::Odometry odom)
@@ -92,13 +97,13 @@ public:
     void imuOdometryHandler(const nav_msgs::Odometry::ConstPtr& odomMsg)
     {
         // static tf
-        static tf2_ros::TransformBroadcaster tfMap2Odom;
-        tf2::Transform map_to_odom;
-        map_to_odom.setOrigin(tf2::Vector3(0,0,0));
-        map_to_odom.setRotation(tf2::Quaternion(0,0,0,1));
-        geometry_msgs::TransformStamped map_to_odom_msg = tf2::toMsg(tf2::Stamped<tf2::Transform>(map_to_odom, odomMsg->header.stamp, mapFrame));
-        map_to_odom_msg.child_frame_id = odometryFrame;
-        tfMap2Odom.sendTransform(map_to_odom_msg);
+        // static tf2_ros::TransformBroadcaster tfMap2Odom;
+        // tf2::Transform map_to_odom;
+        // map_to_odom.setOrigin(tf2::Vector3(0,0,0));
+        // map_to_odom.setRotation(tf2::Quaternion(0,0,0,1));
+        // geometry_msgs::TransformStamped map_to_odom_msg = tf2::toMsg(tf2::Stamped<tf2::Transform>(map_to_odom, odomMsg->header.stamp, mapFrame));
+        // map_to_odom_msg.child_frame_id = odometryFrame;
+        // tfMap2Odom.sendTransform(map_to_odom_msg);
 
         std::lock_guard<std::mutex> lock(mtx);
 
@@ -137,10 +142,11 @@ public:
         tf2::Vector3 laserOdometry_trans_tf(laserOdometry.pose.pose.position.x,laserOdometry.pose.pose.position.y,laserOdometry.pose.pose.position.z);
         tCur.setOrigin(laserOdometry_trans_tf);
         tCur.setRotation(laserOdometry_quat_tf);
-        if(lidarFrame != baselinkFrame)
+        if(lidarFrame != baselinkFrame && lidar2Baselink_vail)
             tCur = tCur * lidar2Baselink;
         geometry_msgs::TransformStamped odom_2_baselink = tf2::toMsg(tf2::Stamped<tf2::Transform>(tCur, odomMsg->header.stamp, odometryFrame));
         odom_2_baselink.child_frame_id = baselinkFrame;
+        // ROS_INFO_STREAM("odom_2_baselink:"<<odom_2_baselink);
 
         tfOdom2BaseLink.sendTransform(odom_2_baselink);
 
