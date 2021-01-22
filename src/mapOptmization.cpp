@@ -207,8 +207,16 @@ public:
     std::string saveSCDDirectory;
     std::string saveNodePCDDirectory;
 
+    //tf
+    tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener tfListener;
+
+    bool gnss2Baselink_vail;
+    geometry_msgs::TransformStamped gnss2Baselink_msg;
+    tf2::Transform gnss2Baselink;
+
 public:
-    mapOptimization()
+    mapOptimization(): tfListener(tfBuffer)
     {
         ISAM2Params parameters;
         parameters.relinearizeThreshold = 0.1;
@@ -262,6 +270,22 @@ public:
         pgTimeSaveStream = std::fstream(savePCDDirectory + "times.txt", std::fstream::out); pgTimeSaveStream.precision(dbl::max_digits10);
         // pgVertexSaveStream = std::fstream(savePCDDirectory + "singlesession_vertex.g2o", std::fstream::out);
         // pgEdgeSaveStream = std::fstream(savePCDDirectory + "singlesession_edge.g2o", std::fstream::out);
+        
+        // get gnss to base_link
+        gnss2Baselink_vail = true;
+        if(true)
+        {
+            try
+            {
+                gnss2Baselink_msg = tfBuffer.lookupTransform(gnssFrame, baselinkFrame, ros::Time(0), ros::Duration(1.0));
+                tf2::convert(gnss2Baselink_msg.transform, gnss2Baselink);
+            }
+            catch (tf2::TransformException ex)
+            {
+                gnss2Baselink_vail = false;
+                ROS_ERROR_STREAM("error in lookupTransform from "<<gnssFrame<<" to "<<baselinkFrame<<":"<<ex.what());
+            }
+        }
 
     }
 
@@ -393,9 +417,47 @@ public:
         }
     }
 
-    void gpsHandler(const nav_msgs::Odometry::ConstPtr& gpsMsg)
-    {
-        gpsQueue.push_back(*gpsMsg);
+    void gpsHandler(const nav_msgs::Odometry::ConstPtr &gpsMsg) {
+      // translate map to odom
+      nav_msgs::Odometry msg = *gpsMsg;
+      if (gpsMsg->header.frame_id == "map") {
+        if (!tfBuffer.canTransform("odom", "map", ros::Time::now(), ros::Duration(0.1)))
+          return;
+        geometry_msgs::PointStamped gps_point;
+        gps_point.header = gpsMsg->header;
+        gps_point.header.stamp = ros::Time::now();
+        gps_point.point.x = gpsMsg->pose.pose.position.x;
+        gps_point.point.y = gpsMsg->pose.pose.position.y;
+        gps_point.point.z = gpsMsg->pose.pose.position.z;
+
+        // translate gnss to base_link
+        if (gnssFrame != baselinkFrame && gnss2Baselink_vail) {
+          tf2::Transform gnss_tf;
+          gnss_tf.setRotation(tf2::Quaternion(0,0,0,1));         
+          gnss_tf.setOrigin(tf2::Vector3(gps_point.point.x, gps_point.point.y, gps_point.point.z));
+          gnss_tf = gnss_tf * gnss2Baselink;
+
+          gps_point.point.x = gnss_tf.getOrigin()[0];
+          gps_point.point.y = gnss_tf.getOrigin()[1];
+          gps_point.point.z = gnss_tf.getOrigin()[2];
+        }
+
+        try {
+          geometry_msgs::PointStamped odom_point;
+          tfBuffer.transform(gps_point, odom_point, "odom", ros::Duration(1));
+
+          msg.pose.pose.position.x = odom_point.point.x;
+          msg.pose.pose.position.y = odom_point.point.y;
+          msg.pose.pose.position.z = odom_point.point.z;
+        } catch (tf2::TransformException &ex) {
+          ROS_ERROR_STREAM("error in lookupTransform from "
+                           << gps_point.header.frame_id << " to odom:"
+                           << gps_point.header.stamp << ex.what());
+          return;
+        }
+      }
+
+      gpsQueue.push_back(msg);
     }
 
     void pointAssociateToMap(PointType const * const pi, PointType * const po)
@@ -1663,12 +1725,6 @@ public:
                     noise_z = 0.01;
                 }
 
-                // translate map to odom 
-                // if(thisGPS.header.frame_id == "map")
-                // {
-
-                // }
-
                 // GPS not properly initialized (0,0,0)
                 if (abs(gps_x) < 1e-6 && abs(gps_y) < 1e-6)
                     continue;
@@ -1690,6 +1746,7 @@ public:
                 gtSAMgraph.add(gps_factor);
 
                 aLoopIsClosed = true;
+                ROS_INFO_STREAM("add gps factor:"<<thisGPS);
                 break;
             }
         }

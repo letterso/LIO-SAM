@@ -8,6 +8,7 @@ lio_sam:
 
   # Frames
   lidarFrame: "base_lidar"
+  gnssFrame: "base_gnss"
   baselinkFrame: "base_link"
   odometryFrame: "odom"
   mapFrame: "map"
@@ -19,7 +20,7 @@ lio_sam:
   poseCovThreshold: 25.0                      # m^2, threshold for using GPS data
   
   # Export settings
-  savePCD: true                               # https://github.com/TixiaoShan/LIO-SAM/issues/3
+  savePCD: false                              # https://github.com/TixiaoShan/LIO-SAM/issues/3
   savePCDDirectory: "/Downloads/LOAM/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
 
   # Sensor Settings
@@ -58,9 +59,9 @@ lio_sam:
 
   # voxel filter paprams
   kSCFilterSize: 0.4                            # Scan Context  0.5 - outdoor, 0.25 - indoor
-  odometrySurfLeafSize: 0.4                     # default: 0.4 - outdoor, 0.2 - indoor
-  mappingCornerLeafSize: 0.2                    # default: 0.2 - outdoor, 0.1 - indoor
-  mappingSurfLeafSize: 0.4                      # default: 0.4 - outdoor, 0.2 - indoor
+  odometrySurfLeafSize: 0.2                     # default: 0.4 - outdoor, 0.2 - indoor
+  mappingCornerLeafSize: 0.1                    # default: 0.2 - outdoor, 0.1 - indoor
+  mappingSurfLeafSize: 0.2                      # default: 0.4 - outdoor, 0.2 - indoor
 
   # robot motion constraint (in case you are using a 2D robot)
   z_tollerance: 10                           # meters
@@ -93,7 +94,7 @@ lio_sam:
 # Navsat (convert GPS coordinates to Cartesian)
 navsat:
   frequency: 50
-  wait_for_datum: false
+  wait_for_datum: true
   delay: 0.0
   magnetic_declination_radians: 0
   yaw_offset: 0
@@ -108,12 +109,12 @@ ekf_gnss:
   publish_tf: false
   map_frame: map
   odom_frame: odom
-  base_link_frame: base_link
-  world_frame: odom
+  base_link_frame: base_gnss
+  world_frame: map
 
   frequency: 50
   two_d_mode: false
-  sensor_timeout: 0.01
+  sensor_timeout: 0.5
   # -------------------------------------
   # External IMU:
   # -------------------------------------
