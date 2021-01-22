@@ -47,23 +47,15 @@ public:
 
     TransformFusion() : tfListener(tfBuffer)
     {
-        subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("lio_sam/mapping/odometry", 5, &TransformFusion::lidarOdometryHandler, this, ros::TransportHints().tcpNoDelay());
-        subImuOdometry   = nh.subscribe<nav_msgs::Odometry>(odomTopic+"_incremental",   2000, &TransformFusion::imuOdometryHandler,   this, ros::TransportHints().tcpNoDelay());
-
-        pubImuOdometry   = nh.advertise<nav_msgs::Odometry>(odomTopic, 2000);
-        pubImuPath       = nh.advertise<nav_msgs::Path>    ("lio_sam/imu/path", 1);
-
-        // wait tfBuffer get tran
-        ros::Duration(2.0).sleep();
-
         lidar2Baselink_vail = true;
         if(lidarFrame != baselinkFrame)
         {
             try
             {
-                lidar2Baselink_msg = tfBuffer.lookupTransform(lidarFrame, baselinkFrame, ros::Time(0), ros::Duration(2.0));
+                tfBuffer.canTransform(lidarFrame, baselinkFrame, ros::Time(0), ros::Duration(2.0));
+                lidar2Baselink_msg = tfBuffer.lookupTransform(lidarFrame, baselinkFrame, ros::Time(0), ros::Duration(1.0));
                 tf2::convert(lidar2Baselink_msg.transform, lidar2Baselink);
-                ROS_INFO_STREAM("lidar2Baselink: "<< lidar2Baselink_msg);
+                // ROS_INFO_STREAM("lidar2Baselink: "<< lidar2Baselink_msg);
             }
             catch (tf2::TransformException ex)
             {
@@ -71,6 +63,12 @@ public:
                 ROS_ERROR_STREAM("error in lookupTransform from "<<lidarFrame<<" to "<<baselinkFrame<<":"<<ex.what());
             }
         }
+
+        subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("lio_sam/mapping/odometry", 5, &TransformFusion::lidarOdometryHandler, this, ros::TransportHints().tcpNoDelay());
+        subImuOdometry   = nh.subscribe<nav_msgs::Odometry>(odomTopic+"_incremental",   2000, &TransformFusion::imuOdometryHandler,   this, ros::TransportHints().tcpNoDelay());
+
+        pubImuOdometry   = nh.advertise<nav_msgs::Odometry>(odomTopic, 2000);
+        pubImuPath       = nh.advertise<nav_msgs::Path>    ("lio_sam/imu/path", 1);
     }
 
     Eigen::Affine3f odom2affine(nav_msgs::Odometry odom)
