@@ -1,6 +1,7 @@
 <launch>
-
+    <!-- Arguments -->
     <arg name="project" default="lio_sam"/>
+    <arg name="open_rviz" default="true"/>
 
     <!-- Parameters -->
     <rosparam file="$(find lio_sam)/config/virtual_params.yaml" command="load" />
@@ -12,6 +13,8 @@
     <include file="$(find lio_sam)/launch/include/module_navsat.launch" />
 
     <!--- Run Rviz-->
-    <include file="$(find lio_sam)/launch/include/module_rviz.launch" />
-
+    <group if="$(arg open_rviz)"> 
+        <include file="$(find lio_sam)/launch/include/module_rviz.launch" />
+    </group>
+    
 </launch>
