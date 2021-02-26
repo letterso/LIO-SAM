@@ -253,7 +253,7 @@ public:
 
         // giseop
         // create directory and remove old files;
-        savePCDDirectory = std::getenv("HOME") + savePCDDirectory; // PCD file
+        // savePCDDirectory = std::getenv("HOME") + savePCDDirectory; // rather use global path 
         int unused = system((std::string("exec rm -r ") + savePCDDirectory).c_str());
         unused = system((std::string("mkdir ") + savePCDDirectory).c_str());
 
@@ -1882,9 +1882,14 @@ public:
         saveSCD(saveSCDDirectory + curr_scd_node_idx + ".scd", curr_scd);
 
         // save keyframe cloud as file giseop
+        bool saveRawCloud { true };
         pcl::PointCloud<PointType>::Ptr thisKeyFrameCloud(new pcl::PointCloud<PointType>());
-        *thisKeyFrameCloud += *thisCornerKeyFrame;
-        *thisKeyFrameCloud += *thisSurfKeyFrame;
+        if(saveRawCloud) { 
+            *thisKeyFrameCloud += *laserCloudRaw;
+        } else {
+            *thisKeyFrameCloud += *thisCornerKeyFrame;
+            *thisKeyFrameCloud += *thisSurfKeyFrame;
+        }
 
         pcl::io::savePCDFileBinary(saveNodePCDDirectory + curr_scd_node_idx + ".pcd", *thisKeyFrameCloud);
         pgTimeSaveStream << laserCloudRawTime << std::endl;
